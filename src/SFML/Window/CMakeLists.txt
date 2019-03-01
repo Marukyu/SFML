@@ -41,6 +41,8 @@ set(SRC
     ${SRCROOT}/VideoModeImpl.hpp
     ${SRCROOT}/Window.cpp
     ${INCROOT}/Window.hpp
+    ${SRCROOT}/WindowBase.cpp
+    ${INCROOT}/WindowBase.hpp
     ${INCROOT}/WindowHandle.hpp
     ${SRCROOT}/WindowImpl.cpp
     ${SRCROOT}/WindowImpl.hpp
@@ -229,6 +231,11 @@ sfml_add_library(sfml-window
                  SOURCES ${SRC} ${PLATFORM_SRC})
 target_link_libraries(sfml-window PUBLIC sfml-system)
 
+# When static linking on macOS, we need to add this flag for objective C to work
+if ((NOT BUILD_SHARED_LIBS) AND SFML_OS_MACOSX)
+    target_link_libraries(sfml-window PRIVATE -ObjC)
+endif()
+
 # find and setup usage for external libraries
 if(SFML_OS_LINUX OR SFML_OS_FREEBSD OR SFML_OPENBSD)
     sfml_find_package(X11 INCLUDE "X11_INCLUDE_DIR" LINK "X11_X11_LIB" "X11_Xrandr_LIB")
@@ -244,14 +251,14 @@ endif()
 
 if(SFML_OPENGL_ES)
     if(SFML_OS_IOS)
-        target_link_libraries(sfml-window PRIVATE "-framework OpenGLES")
+        sfml_add_external(OpenGL LINK "-framework OpenGLES")
     elseif(SFML_OS_ANDROID)
-        target_link_libraries(sfml-window PRIVATE EGL GLESv1_CM)
+        sfml_add_external(OpenGL LINK "EGL" "GLESv1_CM")
     endif()
 else()
-    sfml_find_package(OpenGL INCLUDE "OPENGL_INCLUDE_DIR" LINK "OPENGL_LIBRARIES")
-    target_link_libraries(sfml-window PRIVATE OpenGL)
+    sfml_find_package(OpenGL INCLUDE "OPENGL_INCLUDE_DIR" LINK "OPENGL_gl_LIBRARY")
 endif()
+target_link_libraries(sfml-window PRIVATE OpenGL)
 
 if(SFML_OS_WINDOWS AND NOT SFML_COMPILER_MSVC)
     include(CheckIncludeFile)
