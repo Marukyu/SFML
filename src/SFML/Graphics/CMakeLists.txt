@@ -51,10 +51,6 @@ set(SRC
     ${SRCROOT}/Vertex.cpp
     ${INCROOT}/Vertex.hpp
 )
-if(NOT SFML_OPENGL_ES)
-    list(APPEND SRC ${SRCROOT}/GLLoader.cpp)
-    list(APPEND SRC ${SRCROOT}/GLLoader.hpp)
-endif()
 source_group("" FILES ${SRC})
 
 # drawables sources
@@ -101,6 +97,9 @@ target_link_libraries(sfml-graphics PUBLIC sfml-window)
 # stb_image sources
 target_include_directories(sfml-graphics PRIVATE "${PROJECT_SOURCE_DIR}/extlibs/headers/stb_image")
 
+# glad sources
+target_include_directories(sfml-graphics PRIVATE "${PROJECT_SOURCE_DIR}/extlibs/headers/glad/include")
+
 # let CMake know about our additional graphics libraries paths
 if(SFML_OS_WINDOWS)
     set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "${PROJECT_SOURCE_DIR}/extlibs/headers/freetype2")
@@ -114,26 +113,8 @@ elseif(SFML_OS_ANDROID)
 endif()
 
 # find external libraries
-if(SFML_OPENGL_ES)
-    if(SFML_OS_LINUX)
-        sfml_find_package(EGL INCLUDE "EGL_INCLUDE_DIR" LINK "EGL_LIBRARY")
-        sfml_find_package(GLES INCLUDE "GLES_INCLUDE_DIR" LINK "GLES_LIBRARY")
-        target_link_libraries(sfml-graphics PRIVATE EGL GLES)
-    elseif(SFML_OS_IOS)
-        target_link_libraries(sfml-graphics PRIVATE "-framework OpenGLES")
-    endif()
-else()
-    # Target OpenGL already defined for Window component so no sfml_find_package() here
-    target_link_libraries(sfml-graphics PRIVATE OpenGL)
-
-    if(SFML_OS_LINUX)
-        # Target X11 already defined for Window component so no sfml_find_package() here
-        target_link_libraries(sfml-graphics PRIVATE X11)
-    endif()
-endif()
-
 if(SFML_OS_ANDROID)
-    target_link_libraries(sfml-graphics PRIVATE z EGL GLESv1_CM)
+    target_link_libraries(sfml-graphics PRIVATE z)
 elseif(SFML_OS_IOS)
     target_link_libraries(sfml-graphics PRIVATE z bz2)
 endif()

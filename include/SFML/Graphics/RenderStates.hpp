@@ -130,16 +130,16 @@ public:
     ////////////////////////////////////////////////////////////
     // Static member data
     ////////////////////////////////////////////////////////////
-    static const RenderStates Default; ///< Special instance holding the default render states
+    static const RenderStates Default; //!< Special instance holding the default render states
 
     ////////////////////////////////////////////////////////////
     // Member data
     ////////////////////////////////////////////////////////////
-    BlendMode       blendMode;       ///< Blending mode
-    StencilMode     stencilMode;     ///< Stencil mode
-    Transform       transform;       ///< Transform
-    const Texture*  texture;         ///< Texture
-    const Shader*   shader;          ///< Shader
+    BlendMode       blendMode;       //!< Blending mode
+    StencilMode     stencilMode;     //!< Stencil mode
+    Transform       transform;       //!< Transform
+    const Texture*  texture;         //!< Texture
+    const Shader*   shader;          //!< Shader
 };
 
 } // namespace sf
