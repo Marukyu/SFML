@@ -27,6 +27,8 @@ set(SRC
     ${INCROOT}/OutputSoundFile.hpp
     ${SRCROOT}/SoundFilter.cpp
     ${INCROOT}/SoundFilter.hpp
+    ${SRCROOT}/LowPassFilter.cpp
+    ${INCROOT}/LowPassFilter.hpp
     ${SRCROOT}/SoundRecorder.cpp
     ${INCROOT}/SoundRecorder.hpp
     ${SRCROOT}/SoundSource.cpp
