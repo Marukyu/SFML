@@ -22,6 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 #ifndef SFML_SOUNDSOURCE_HPP
 #define SFML_SOUNDSOURCE_HPP
 
@@ -35,6 +37,9 @@
 
 namespace sf
 {
+class SoundFilter;
+class Time;
+
 ////////////////////////////////////////////////////////////
 /// \brief Base class defining a sound's properties
 ///
@@ -294,6 +299,22 @@ public:
     virtual Status getStatus() const;
 
     ////////////////////////////////////////////////////////////
+    /// \brief Assigns a filter to the sound source
+    ///
+    /// \param filter The filter to assign. Passing a null pointer removes the filter
+    ///
+    ////////////////////////////////////////////////////////////
+    void setFilter(SoundFilter* filter);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Get the filter currently assigned to the sound
+    ///
+    /// \return The currently assigned filter object, or a null pointer if no filter is assigned.
+    ///
+    ////////////////////////////////////////////////////////////
+    SoundFilter* getFilter() const;
+
+    ////////////////////////////////////////////////////////////
     /// \brief Simultaneously plays or pauses multiple sources at once
     ///
     /// \param status Desired playback status
@@ -359,6 +380,7 @@ protected:
     // Member data
     ////////////////////////////////////////////////////////////
     unsigned int m_source; //!< OpenAL source identifier
+    SoundFilter* m_filter; //!< Filter obejct assigned to the sound
 };
 
 } // namespace sf

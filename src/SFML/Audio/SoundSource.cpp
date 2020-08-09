@@ -29,6 +29,7 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Audio/SoundSource.hpp>
 #include <SFML/Audio/ALCheck.hpp>
+#include <SFML/Audio/SoundFilter.hpp>
 #include <SFML/System/Sleep.hpp>
 #include <SFML/System/Time.hpp>
 #include <cstdlib>
@@ -38,7 +39,9 @@
 namespace sf
 {
 ////////////////////////////////////////////////////////////
-SoundSource::SoundSource()
+SoundSource::SoundSource() :
+    m_source(0),
+    m_filter(NULL)
 {
     alCheck(alGenSources(1, &m_source));
     alCheck(alSourcei(m_source, AL_BUFFER, 0));
@@ -210,6 +213,32 @@ SoundSource::Status SoundSource::getStatus() const
     }
 
     return Stopped;
+}
+
+
+////////////////////////////////////////////////////////////
+void SoundSource::setFilter(SoundFilter* filter)
+{
+    // Unbind any existing filter
+    if (m_filter)
+    {
+        m_filter->unbind(m_source);
+    }
+
+    m_filter = filter;
+
+    // Bind the new filter
+    if (m_filter)
+    {
+        m_filter->bind(m_source);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+SoundFilter* SoundSource::getFilter() const
+{
+    return m_filter;
 }
 
 
