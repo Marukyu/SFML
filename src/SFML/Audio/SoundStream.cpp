@@ -22,6 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
@@ -44,6 +46,7 @@ SoundStream::SoundStream() :
 m_thread          (&SoundStream::streamData, this),
 m_threadMutex     (),
 m_threadStartState(Stopped),
+m_threadSetupComplete(false),
 m_isStreaming     (false),
 m_buffers         (),
 m_channelCount    (0),
@@ -266,6 +269,42 @@ Int64 SoundStream::onLoop()
 
 
 ////////////////////////////////////////////////////////////
+void SoundStream::prepareSynchronizedPlayback(Time timeOffset)
+{
+    // Request the thread to terminate
+    {
+        Lock lock(m_threadMutex);
+        m_isStreaming = false;
+    }
+
+    // Wait for the thread to terminate
+    m_thread.wait();
+
+    // Reset thread readiness flag
+    m_threadSetupComplete = false;
+
+    // Let the derived class update the current position
+    onSeek(timeOffset);
+
+    // Reset playback time
+    m_samplesProcessed = static_cast<Uint64>(timeOffset.asSeconds() * m_sampleRate * m_channelCount);
+
+    // Restart streaming in paused state
+    m_isStreaming = true;
+    m_threadStartState = Paused;
+    m_thread.launch();
+}
+
+
+////////////////////////////////////////////////////////////
+bool SoundStream::isSynchronizedPlaybackReady() const
+{
+    Lock lock(m_threadMutex);
+    return m_threadSetupComplete;
+}
+
+
+////////////////////////////////////////////////////////////
 void SoundStream::streamData()
 {
     bool requestStop = false;
@@ -298,6 +337,9 @@ void SoundStream::streamData()
         // Check if the thread was launched Paused
         if (m_threadStartState == Paused)
             alCheck(alSourcePause(m_source));
+
+        // Mark thread as ready
+        m_threadSetupComplete = true;
     }
 
     for (;;)

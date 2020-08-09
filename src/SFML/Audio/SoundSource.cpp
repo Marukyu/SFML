@@ -22,11 +22,17 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
 #include <SFML/Audio/SoundSource.hpp>
 #include <SFML/Audio/ALCheck.hpp>
+#include <SFML/System/Sleep.hpp>
+#include <SFML/System/Time.hpp>
+#include <cstdlib>
+#include <vector>
 
 
 namespace sf
@@ -204,6 +210,112 @@ SoundSource::Status SoundSource::getStatus() const
     }
 
     return Stopped;
+}
+
+
+////////////////////////////////////////////////////////////
+void SoundSource::synchronize(Status status, SoundSource* const* sources, unsigned int sourceCount)
+{
+    if (status == Stopped)
+    {
+        // Stopping does not need any special synchronization
+        for (Uint32 i = 0; i < sourceCount; ++i)
+        {
+            sources[i]->stop();
+        }
+        return;
+    }
+
+    // Check if any of the sources are currently stopped. This will require a full timestamped resynchronization
+    for (Uint32 i = 0; i < sourceCount; ++i)
+    {
+        if (sources[i]->getStatus() == Stopped)
+        {
+            synchronize(status, sf::Time::Zero, sources, sourceCount);
+            return;
+        }
+    }
+
+    // Perform the actual synchronized playback status update
+    synchronizeImpl(status, sources, sourceCount);
+}
+
+
+////////////////////////////////////////////////////////////
+void SoundSource::synchronize(Status status, Time timeOffset, SoundSource* const* sources, unsigned int sourceCount)
+{
+    if (status == Stopped)
+    {
+        // Stopping does not need any special synchronization
+        for (Uint32 i = 0; i < sourceCount; ++i)
+        {
+            sources[i]->stop();
+        }
+        return;
+    }
+
+    // Update the playback time for all sources and prepare their playback threads (if necessary)
+    for (Uint32 i = 0; i < sourceCount; ++i)
+    {
+        sources[i]->prepareSynchronizedPlayback(timeOffset);
+    }
+
+    // Wait for the playback threads of all sources to be initialized
+    bool allReady = false;
+    while (!allReady)
+    {
+        allReady = true;
+
+        for (Uint32 i = 0; i < sourceCount; ++i)
+        {
+            if (!sources[i]->isSynchronizedPlaybackReady())
+            {
+                allReady = false;
+                sleep(milliseconds(5));
+                break;
+            }
+        }
+    }
+
+    // Perform the actual synchronized playback status update
+    synchronizeImpl(status, sources, sourceCount);
+}
+
+
+////////////////////////////////////////////////////////////
+void SoundSource::synchronizeImpl(Status status, SoundSource* const* sources, unsigned int sourceCount)
+{
+    // Create a buffer containing all OpenAL source IDs
+    std::vector<ALuint> sourceIDs(sourceCount);
+    for (Uint32 i = 0; i < sourceCount; ++i)
+    {
+        sourceIDs[i] = sources[i]->m_source;
+    }
+
+    // Update the OpenAL playback status of all sources at once
+    if (status == Playing)
+    {
+        alCheck(alSourcePlayv(sourceIDs.size(), sourceIDs.data()));
+    }
+    else
+    {
+        alCheck(alSourcePausev(sourceIDs.size(), sourceIDs.data()));
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void SoundSource::prepareSynchronizedPlayback(Time timeOffset)
+{
+    // Nothing special needs to be done by default.
+}
+
+
+////////////////////////////////////////////////////////////
+bool SoundSource::isSynchronizedPlaybackReady() const
+{
+    // Synchronized playback is always ready by default.
+    return true;
 }
 
 } // namespace sf

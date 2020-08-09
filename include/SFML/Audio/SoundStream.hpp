@@ -22,6 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 #ifndef SFML_SOUNDSTREAM_HPP
 #define SFML_SOUNDSTREAM_HPP
 
@@ -251,6 +253,26 @@ protected:
     ////////////////////////////////////////////////////////////
     virtual Int64 onLoop();
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Prepares the sound stream for synchronized playback
+    ///
+    /// Initializes the streaming thread and pauses the stream at the specified time offset.
+    ///
+    /// \param timeOffset Synchronized playback position, from the beginning of the stream
+    ///
+    ////////////////////////////////////////////////////////////
+    void prepareSynchronizedPlayback(Time timeOffset);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Checks if the sound stream is ready for synchronized playback
+    ///
+    /// This function's return value is only meaningful is prepareSynchronizedPlayback() has been called previously.
+    ///
+    /// \return True if the stream is ready for synchronized playback operations
+    ///
+    ////////////////////////////////////////////////////////////
+    bool isSynchronizedPlaybackReady() const;
+
 private:
 
     ////////////////////////////////////////////////////////////
@@ -309,6 +331,7 @@ private:
     Thread        m_thread;                   //!< Thread running the background tasks
     mutable Mutex m_threadMutex;              //!< Thread mutex
     Status        m_threadStartState;         //!< State the thread starts in (Playing, Paused, Stopped)
+    bool          m_threadSetupComplete;      //!< Thread readiness
     bool          m_isStreaming;              //!< Streaming state (true = playing, false = stopped)
     unsigned int  m_buffers[BufferCount];     //!< Sound buffers used to store temporary audio data
     unsigned int  m_channelCount;             //!< Number of channels (1 = mono, 2 = stereo, ...)

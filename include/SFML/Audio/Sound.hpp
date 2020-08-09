@@ -22,6 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 #ifndef SFML_SOUND_HPP
 #define SFML_SOUND_HPP
 
@@ -211,6 +213,18 @@ public:
     ///
     ////////////////////////////////////////////////////////////
     void resetBuffer();
+
+protected:
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Prepares the sound for synchronized playback
+    ///
+    /// Sets the sound's playback offset to the specified time offset.
+    ///
+    /// \param timeOffset Synchronized playback position, from the beginning of the sound buffer
+    ///
+    ////////////////////////////////////////////////////////////
+    void prepareSynchronizedPlayback(Time timeOffset);
 
 private:
 

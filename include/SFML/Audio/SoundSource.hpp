@@ -293,6 +293,27 @@ public:
     ////////////////////////////////////////////////////////////
     virtual Status getStatus() const;
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Simultaneously plays or pauses multiple sources at once
+    ///
+    /// \param status Desired playback status
+    /// \param sources Pointer to an array of SoundSource instances
+    /// \param sourceCount Number of sources passed in `sources` parameter
+    ///
+    ////////////////////////////////////////////////////////////
+    static void synchronize(Status status, SoundSource* const* sources, unsigned int sourceCount);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Simultaneously plays or pauses multiple sources at once
+    ///
+    /// \param status Desired playback status
+    /// \param timeOffset Synchronized playback position, from the beginning of the sound
+    /// \param sources Pointer to an array of SoundSource instances
+    /// \param sourceCount Number of sources passed in `sources` parameter
+    ///
+    ////////////////////////////////////////////////////////////
+    static void synchronize(Status status, Time timeOffset, SoundSource* const* sources, unsigned int sourceCount);
+
 protected:
 
     ////////////////////////////////////////////////////////////
@@ -302,6 +323,37 @@ protected:
     ///
     ////////////////////////////////////////////////////////////
     SoundSource();
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Prepares the sound source for synchronized playback
+    ///
+    /// Sets the playback position of the sound source (if possible) and puts it in a state for synchronized playback.
+    ///
+    /// \param timeOffset Synchronized playback position, from the beginning of the sound
+    ///
+    ////////////////////////////////////////////////////////////
+    virtual void prepareSynchronizedPlayback(Time timeOffset);
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Checks if the sound stream is ready for synchronized playback
+    ///
+    /// This function's return value is only meaningful is prepareSynchronizedPlayback() has been called previously.
+    ///
+    /// \return True if the stream is ready for synchronized playback operations
+    ///
+    ////////////////////////////////////////////////////////////
+    virtual bool isSynchronizedPlaybackReady() const;
+
+    ////////////////////////////////////////////////////////////
+    /// \brief Simultaneously plays or pauses multiple sources at once (implementation function)
+    ///
+    /// \param status Desired playback status
+    /// \param sources Pointer to an array of SoundSource instances
+    /// \param sourceCount Number of sources passed in `sources` parameter
+    ///
+    ////////////////////////////////////////////////////////////
+    static void synchronizeImpl(Status status, SoundSource* const* sources, unsigned int sourceCount);
+
 
     ////////////////////////////////////////////////////////////
     // Member data

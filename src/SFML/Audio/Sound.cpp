@@ -22,6 +22,8 @@
 //
 ////////////////////////////////////////////////////////////
 
+// Adapted by Marukyu for World of Sand
+
 ////////////////////////////////////////////////////////////
 // Headers
 ////////////////////////////////////////////////////////////
@@ -193,6 +195,11 @@ void Sound::resetBuffer()
         m_buffer->detachSound(this);
         m_buffer = NULL;
     }
+}
+
+void Sound::prepareSynchronizedPlayback(Time timeOffset)
+{
+    setPlayingOffset(timeOffset);
 }
 
 } // namespace sf
