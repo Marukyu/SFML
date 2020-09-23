@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
+// Copyright (C) 2007-2020 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,6 +29,7 @@
 #include <SFML/Window/Unix/Display.hpp>
 #include <X11/cursorfont.h>
 #include <X11/Xutil.h>
+#include <X11/Xcursor/Xcursor.h>
 #include <cassert>
 #include <cstdlib>
 #include <vector>
@@ -61,17 +62,59 @@ bool CursorImpl::loadFromPixels(const Uint8* pixels, Vector2u size, Vector2u hot
 {
     release();
 
+    if (isColorCursorSupported())
+        return loadFromPixelsARGB(pixels, size, hotspot);
+    else
+        return loadFromPixelsMonochrome(pixels, size, hotspot);
+}
+
+
+////////////////////////////////////////////////////////////
+bool CursorImpl::loadFromPixelsARGB(const Uint8* pixels, Vector2u size, Vector2u hotspot)
+{
+    // Create cursor image, convert from RGBA to ARGB.
+    XcursorImage* cursorImage = XcursorImageCreate(size.x, size.y);
+    cursorImage->xhot = hotspot.x;
+    cursorImage->yhot = hotspot.y;
+
+    const std::size_t numPixels = size.x * size.y;
+    for (std::size_t pixelIndex = 0; pixelIndex < numPixels; ++pixelIndex)
+    {
+        cursorImage->pixels[pixelIndex] = pixels[pixelIndex * 4 + 2] +
+                                         (pixels[pixelIndex * 4 + 1] << 8) +
+                                         (pixels[pixelIndex * 4 + 0] << 16) +
+                                         (pixels[pixelIndex * 4 + 3] << 24);
+    }
+
+    // Create the cursor.
+    m_cursor = XcursorImageLoadCursor(m_display, cursorImage);
+
+    // Free the resources
+    XcursorImageDestroy(cursorImage);
+
+    // We assume everything went fine...
+    return true;
+}
+
+
+////////////////////////////////////////////////////////////
+bool CursorImpl::loadFromPixelsMonochrome(const Uint8* pixels, Vector2u size, Vector2u hotspot)
+{
     // Convert the image into a bitmap (monochrome!).
-    std::size_t bytes = (size.x + 7) / 8 * size.y;
-    std::vector<Uint8> mask(bytes, 0); // Defines which pixel is transparent.
-    std::vector<Uint8> data(bytes, 1); // Defines which pixel is white/black.
+    // The bit data is stored packed into bytes. If the number of pixels on each row of the image
+    // does not fit exactly into (width/8) bytes, one extra byte is allocated at the end of each
+    // row to store the extra pixels.
+    std::size_t packedWidth = (size.x + 7) / 8;
+    std::size_t bytes = packedWidth * size.y;
+    std::vector<Uint8> mask(bytes, 0); // Defines which pixel is opaque (1) or transparent (0).
+    std::vector<Uint8> data(bytes, 0); // Defines which pixel is white (1) or black (0).
 
     for (std::size_t j = 0; j < size.y; ++j)
     {
         for (std::size_t i = 0; i < size.x; ++i)
         {
             std::size_t pixelIndex = i + j * size.x;
-            std::size_t byteIndex  = pixelIndex / 8;
+            std::size_t byteIndex  = i / 8 + j * packedWidth;
             std::size_t bitIndex   = i % 8;
 
             // Turn on pixel that are not transparent
@@ -80,9 +123,9 @@ bool CursorImpl::loadFromPixels(const Uint8* pixels, Vector2u size, Vector2u hot
 
             // Choose between black/background & white/foreground color for each pixel,
             // based on the pixel color intensity: on average, if a channel is "active"
-            // at 25%, the bit is white.
-            int intensity = pixels[pixelIndex * 4 + 0] + pixels[pixelIndex * 4 + 1] + pixels[pixelIndex * 4 + 2];
-            Uint8 bit = intensity > 64 ? 1 : 0;
+            // at 50%, the bit is white.
+            int intensity = (pixels[pixelIndex * 4 + 0] + pixels[pixelIndex * 4 + 1] + pixels[pixelIndex * 4 + 2]) / 3;
+            Uint8 bit = intensity > 128 ? 1 : 0;
             data[byteIndex] |= bit << bitIndex;
         }
     }
@@ -136,6 +179,13 @@ bool CursorImpl::loadFromSystem(Cursor::Type type)
 
     m_cursor = XCreateFontCursor(m_display, shape);
     return true;
+}
+
+
+////////////////////////////////////////////////////////////
+bool CursorImpl::isColorCursorSupported()
+{
+    return XcursorSupportsARGB(m_display);
 }
 
 

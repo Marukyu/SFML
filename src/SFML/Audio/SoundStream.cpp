@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
+// Copyright (C) 2007-2020 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -54,7 +54,8 @@ m_sampleRate      (0),
 m_format          (0),
 m_loop            (false),
 m_samplesProcessed(0),
-m_bufferSeeks     ()
+m_bufferSeeks     (),
+m_processingInterval(milliseconds(10))
 {
 
 }
@@ -267,6 +268,11 @@ Int64 SoundStream::onLoop()
     return 0;
 }
 
+////////////////////////////////////////////////////////////
+void SoundStream::setProcessingInterval(Time interval)
+{
+    m_processingInterval = interval;
+}
 
 ////////////////////////////////////////////////////////////
 void SoundStream::prepareSynchronizedPlayback(Time timeOffset)
@@ -413,7 +419,7 @@ void SoundStream::streamData()
 
         // Leave some time for the other threads if the stream is still playing
         if (SoundSource::getStatus() != Stopped)
-            sleep(milliseconds(10));
+            sleep(m_processingInterval);
     }
 
     // Stop the playback
