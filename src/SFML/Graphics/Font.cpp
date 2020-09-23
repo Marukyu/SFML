@@ -639,6 +639,9 @@ Glyph Font::loadGlyph(Uint32 codePoint, unsigned int characterSize, bool bold, f
         // Get the glyphs page corresponding to the character size
         Page& page = m_pages[characterSize];
 
+		// In case the page was newly created, update its smoothness status
+		page.texture.setSmooth(m_isSmooth);
+
         // Find a good position for the new glyph into the texture
         glyph.textureRect = findGlyphRect(page, width, height);
 
